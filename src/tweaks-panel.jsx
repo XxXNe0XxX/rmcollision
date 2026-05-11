@@ -128,7 +128,7 @@ function useTweaks(defaults) {
 
 // ── TweaksPanel ─────────────────────────────────────────────────────────────
 function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
   const dragRef = React.useRef(null);
   const hasDeckStage = React.useMemo(
     () => typeof document !== 'undefined' && !!document.querySelector('deck-stage'),
@@ -219,27 +219,49 @@ function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
     window.addEventListener('mouseup', up);
   };
 
-  if (!open) return null;
+  const toggleBtn = (
+    <button
+      onClick={() => setOpen(o => !o)}
+      style={{
+        position: 'fixed', top: 10, right: 10, zIndex: 2147483647,
+        background: open ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.75)',
+        color: '#fff', border: 'none', borderRadius: 8,
+        padding: '5px 12px', fontSize: 11, fontWeight: 600,
+        letterSpacing: '0.04em', cursor: 'pointer',
+        fontFamily: 'ui-sans-serif,system-ui,-apple-system,sans-serif',
+        backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+        transition: 'background .15s',
+      }}
+      aria-label={open ? 'Close tweaks' : 'Open tweaks'}
+    >
+      {open ? '✕ Tweaks' : '⚙ Tweaks'}
+    </button>
+  );
+
   return (
     <>
       <style>{__TWEAKS_STYLE}</style>
-      <div ref={dragRef} className="twk-panel" data-noncommentable=""
-           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
-        <div className="twk-hd" onMouseDown={onDragStart}>
-          <b>{title}</b>
-          <button className="twk-x" aria-label="Close tweaks"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={dismiss}>✕</button>
+      {toggleBtn}
+      {open && (
+        <div ref={dragRef} className="twk-panel" data-noncommentable=""
+             style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+          <div className="twk-hd" onMouseDown={onDragStart}>
+            <b>{title}</b>
+            <button className="twk-x" aria-label="Close tweaks"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={dismiss}>✕</button>
+          </div>
+          <div className="twk-body">
+            {children}
+            {hasDeckStage && railEnabled && !noDeckControls && (
+              <TweakSection label="Deck">
+                <TweakToggle label="Thumbnail rail" value={railVisible} onChange={toggleRail} />
+              </TweakSection>
+            )}
+          </div>
         </div>
-        <div className="twk-body">
-          {children}
-          {hasDeckStage && railEnabled && !noDeckControls && (
-            <TweakSection label="Deck">
-              <TweakToggle label="Thumbnail rail" value={railVisible} onChange={toggleRail} />
-            </TweakSection>
-          )}
-        </div>
-      </div>
+      )}
     </>
   );
 }
