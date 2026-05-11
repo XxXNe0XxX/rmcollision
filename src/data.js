@@ -34,6 +34,8 @@ export const MOCK = {
     nextSlot: 'Today · 14:00',
     bays: 4,
     activeBays: 2,
+    instagram: 'https://instagram.com/rmcollision',
+    tiktok: 'https://tiktok.com/@rmcollision',
   },
 
   vehicleMakes: ['Acura','Audi','BMW','Chevrolet','Dodge','Ford','Honda','Hyundai','Jeep','Kia','Lexus','Mazda','Mercedes','Nissan','Porsche','Subaru','Tesla','Toyota','Volkswagen','Volvo'],

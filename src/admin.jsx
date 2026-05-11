@@ -365,6 +365,24 @@ function AdminSettings({ settings, setSettings }) {
           <Field label="PHONE"><input style={inputStyle} className="mono" value={settings.phone} onChange={e=>setSettings({...settings, phone: e.target.value})}/></Field>
         </div>
       </div>
+
+      {/* Social */}
+      <div style={{ marginTop: 16, border: '1px solid var(--line)', background: 'var(--surf)', padding: 16 }}>
+        <div className="mono" style={{ fontSize: 9, color: 'var(--mute)' }}>[ SOCIAL ]</div>
+        <div className="display" style={{ fontSize: 16, fontWeight: 600, marginTop: 4 }}>Social links</div>
+        <div style={{ marginTop: 12 }}>
+          <Field label="INSTAGRAM URL">
+            <input style={inputStyle} className="mono" value={settings.instagram || ''}
+                   placeholder="https://instagram.com/…"
+                   onChange={e => setSettings({...settings, instagram: e.target.value})} />
+          </Field>
+          <Field label="TIKTOK URL">
+            <input style={inputStyle} className="mono" value={settings.tiktok || ''}
+                   placeholder="https://tiktok.com/@…"
+                   onChange={e => setSettings({...settings, tiktok: e.target.value})} />
+          </Field>
+        </div>
+      </div>
     </div>
   );
 }

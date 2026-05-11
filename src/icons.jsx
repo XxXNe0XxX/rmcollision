@@ -39,6 +39,8 @@ function Icon({ name, size = 20, stroke = 'currentColor', strokeWidth = 1.6, fil
     bell:    <><path {...p} d="M6 10a6 6 0 1 1 12 0c0 5 2 7 2 7H4s2-2 2-7Z"/><path {...p} d="M10 21a2 2 0 0 0 4 0"/></>,
     bay:     <><rect {...p} x="3" y="7" width="18" height="11"/><path {...p} d="M3 14h18M9 7v11M15 7v11"/></>,
     flag:    <><path {...p} d="M4 4v17"/><path {...p} d="M4 4h14l-2 4 2 4H4"/></>,
+    instagram:<><rect {...p} x="4" y="4" width="16" height="16" rx="5"/><circle {...p} cx="12" cy="12" r="4"/><circle cx="16.5" cy="7.5" r="1.2" fill={stroke} stroke="none"/></>,
+    tiktok:  <><path {...p} d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
