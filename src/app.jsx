@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { MOCK } from './data.js';
+import { useServices } from './hooks/useServices.ts';
 import {
   useTweaks, TweaksPanel, TweakSection, TweakToggle, TweakColor, TweakRadio, TweakButton,
 } from './tweaks-panel.jsx';
@@ -93,7 +94,7 @@ function MobileView({ services, settings, setSettings, setTweak, t, blocked }) {
 
 // ─── Admin view ──────────────────────────────────────────────────────────────
 
-function AdminView({ services, setServices, appointments, setAppointments, settings, setSettings, setTweak, t }) {
+function AdminView({ services, appointments, setAppointments, settings, setSettings, setTweak, t }) {
   const { page = 'dash' } = useParams();
   const navigate = useNavigate();
 
@@ -120,8 +121,8 @@ function AdminView({ services, setServices, appointments, setAppointments, setti
           <div style={{ maxWidth: 500 }}><BayPanel appointments={appointments} settings={settings} /></div>
         </div>
       );
-      case 'svc': return <AdminServiceManager services={services} setServices={setServices} />;
-      case 'set': return <AdminSettings settings={settings} setSettings={(s) => { setSettings(s); setTweak({ holidayMode: s.holidayMode, shopStatus: s.shopStatus }); }} />;
+      case 'svc': return <AdminServiceManager services={services} />;
+      case 'set': return <AdminSettings settings={settings} setSettings={(s) => { setSettings(s); setTweak({ holidayMode: s.holidayMode, shopStatus: s.shopStatus }); }} dark={t.dark} accent={t.accent} setTweak={setTweak} />;
       default: return <Navigate to="/admin/dash" replace />;
     }
   })();
@@ -136,23 +137,6 @@ function AdminView({ services, setServices, appointments, setAppointments, setti
         </div>
       </div>
 
-      <TweaksPanel title="Tweaks">
-        <TweakSection label="Theme">
-          <TweakToggle label="Dark mode" value={t.dark} onChange={(v) => setTweak('dark', v)} />
-          <TweakColor label="Accent" value={t.accent} options={['#FF5733', '#007BFF', '#FFD400', '#34C759', '#E5E5E7']} onChange={(v) => setTweak('accent', v)} />
-        </TweakSection>
-        <TweakSection label="Shop state (live)">
-          <TweakRadio label="Status" value={t.shopStatus} options={['open', 'busy', 'closed']} onChange={(v) => setTweak('shopStatus', v)} />
-          <TweakToggle label="Holiday mode" value={t.holidayMode} onChange={(v) => setTweak('holidayMode', v)} />
-        </TweakSection>
-        <TweakSection label="Demo">
-          <TweakButton secondary label="Reset data" onClick={() => {
-            setServices(MOCK.services);
-            setAppointments(MOCK.appointments);
-            setSettings(MOCK.settings);
-          }} />
-        </TweakSection>
-      </TweaksPanel>
     </div>
   );
 }
@@ -161,7 +145,7 @@ function AdminView({ services, setServices, appointments, setAppointments, setti
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const [services, setServices] = useState(MOCK.services);
+  const { data: services = [], isLoading: servicesLoading } = useServices();
   const [appointments, setAppointments] = useState(MOCK.appointments);
   const [settings, setSettings] = useState(MOCK.settings);
 
@@ -176,7 +160,7 @@ function App() {
   const themeClass = t.dark ? 'theme-dark' : 'theme-light';
   const blocked = settings.holidayMode || settings.shopStatus === 'closed';
 
-  const sharedProps = { services, setServices, appointments, setAppointments, settings, setSettings, setTweak, t };
+  const sharedProps = { services, appointments, setAppointments, settings, setSettings, setTweak, t };
 
   return (
     <div className={themeClass} style={{ color: 'var(--text)', fontFamily: 'var(--font-body)' }}>

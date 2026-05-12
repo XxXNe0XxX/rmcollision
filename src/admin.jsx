@@ -4,52 +4,86 @@ import { Icon } from './icons.jsx';
 import { FieldLabel, Field, inputStyle } from './mobile.jsx';
 
 function AdminSidebar({ page, setPage, settings }) {
+  const [collapsed, setCollapsed] = useState(false);
   const items = [
-    { id: 'dash',    label: 'Dashboard',    icon: 'grid' },
-    { id: 'feed',    label: 'Appointments', icon: 'cal' },
-    { id: 'bays',    label: 'Bay Status',   icon: 'bay' },
-    { id: 'svc',     label: 'Services',     icon: 'wrench' },
-    { id: 'set',     label: 'Settings',     icon: 'settings' },
+    { id: 'dash', label: 'Dashboard',    icon: 'grid' },
+    { id: 'feed', label: 'Appointments', icon: 'cal' },
+    { id: 'bays', label: 'Bay Status',   icon: 'bay' },
+    { id: 'svc',  label: 'Services',     icon: 'wrench' },
+    { id: 'set',  label: 'Settings',     icon: 'settings' },
   ];
   return (
     <div style={{
-      width: 220, background: 'var(--bg-2)', borderRight: '1px solid var(--line)',
-      display: 'flex', flexDirection: 'column', flexShrink: 0,
+      width: collapsed ? 56 : 220,
+      transition: 'width 0.2s ease',
+      background: 'var(--bg-2)', borderRight: '1px solid var(--line)',
+      display: 'flex', flexDirection: 'column', flexShrink: 0, overflow: 'hidden',
     }}>
-      <div style={{ padding: '18px 16px', borderBottom: '1px solid var(--line)' }}>
-        <div className="display" style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>
-          RM<span style={{ color: 'var(--orange)' }}>/</span>COLLISION
+      {/* Header */}
+      <div style={{ padding: collapsed ? '18px 0' : '18px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', gap: 8, minHeight: 64 }}>
+        <div className="display" style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+          {collapsed
+            ? <>RM<span style={{ color: 'var(--orange)' }}>/</span>C</>
+            : <>RM<span style={{ color: 'var(--orange)' }}>/</span>COLLISION</>
+          }
         </div>
-        <div className="mono" style={{ fontSize: 9, color: 'var(--mute)', marginTop: 2, letterSpacing: 0.1 }}>
-          [ COMMAND CENTER · v2.4 ]
-        </div>
+        {!collapsed && (
+          <button onClick={() => setCollapsed(true)} title="Collapse" style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: 'var(--mute)', padding: 4, display: 'flex', flexShrink: 0,
+          }}>
+            <span style={{ display: 'flex', transform: 'rotate(180deg)' }}>
+              <Icon name="chev" size={14} />
+            </span>
+          </button>
+        )}
       </div>
-      <div style={{ flex: 1, padding: '8px 8px' }}>
+
+      {/* Nav items */}
+      <div style={{ flex: 1, padding: '8px 4px' }}>
         {items.map(it => (
-          <button key={it.id} onClick={()=>setPage(it.id)} style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 12px', border: 'none', cursor: 'pointer', textAlign: 'left',
+          <button key={it.id} onClick={() => setPage(it.id)} title={collapsed ? it.label : undefined} style={{
+            width: '100%', display: 'flex', alignItems: 'center',
+            gap: collapsed ? 0 : 10,
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            padding: collapsed ? '10px 0' : '10px 10px',
+            border: 'none', cursor: 'pointer', textAlign: 'left',
             background: page === it.id ? 'var(--surf)' : 'transparent',
             color: page === it.id ? 'var(--text)' : 'var(--mute)',
             borderLeft: '2px solid ' + (page === it.id ? 'var(--orange)' : 'transparent'),
             fontSize: 13, fontFamily: 'var(--font-display)', fontWeight: 500,
           }}>
             <Icon name={it.icon} size={16} strokeWidth={page === it.id ? 2 : 1.5} />
-            <span>{it.label}</span>
+            {!collapsed && <span>{it.label}</span>}
           </button>
         ))}
+        {/* Expand button lives inside nav when collapsed */}
+        {collapsed && (
+          <button onClick={() => setCollapsed(false)} title="Expand" style={{
+            width: '100%', display: 'flex', justifyContent: 'center',
+            padding: '10px 0', marginTop: 4,
+            background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--mute)',
+            borderLeft: '2px solid transparent',
+          }}>
+            <Icon name="chev" size={14} />
+          </button>
+        )}
       </div>
-      <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
-        <div style={{ background: 'var(--surf)', padding: 10, border: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span className="dot dot-pulse" style={{ background: settings.holidayMode ? 'var(--red)' : 'var(--green)', color: settings.holidayMode ? 'var(--red)' : 'var(--green)' }} />
-            <span className="mono" style={{ fontSize: 9, color: 'var(--mute)' }}>{settings.holidayMode ? 'PAUSED' : 'LIVE'}</span>
-          </div>
-          <div className="mono" style={{ fontSize: 10, color: 'var(--text)', marginTop: 4 }}>
-            {settings.activeBays}/{settings.bays} BAYS · {settings.shopStatus.toUpperCase()}
+
+      {/* Status footer */}
+      {!collapsed && (
+        <div style={{ padding: 12, borderTop: '1px solid var(--line)' }}>
+          <div style={{ background: 'var(--surf)', padding: 10, border: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="dot dot-pulse" style={{ background: settings.holidayMode ? 'var(--red)' : 'var(--green)', color: settings.holidayMode ? 'var(--red)' : 'var(--green)' }} />
+              <span className="mono" style={{ fontSize: 9, color: 'var(--mute)' }}>{settings.holidayMode ? 'PAUSED' : 'LIVE'}</span>
+            </div>
+            <div className="mono" style={{ fontSize: 10, color: 'var(--text)', marginTop: 4 }}>
+              {settings.activeBays}/{settings.bays} BAYS · {settings.shopStatus.toUpperCase()}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -179,7 +213,7 @@ function AppointmentFeed({ appointments, services, updateAppointment, compact = 
               </div>
               <div>
                 <div className="display" style={{ fontSize: 13, fontWeight: 600 }}>{a.customer}</div>
-                <div className="mono" style={{ fontSize: 10, color: 'var(--mute)', marginTop: 2 }}>{compact ? a.vehicle : items.map(s=>s.code).join(' · ')}</div>
+                <div className="mono" style={{ fontSize: 10, color: 'var(--mute)', marginTop: 2 }}>{compact ? a.vehicle : items.map(s=>s.name).join(' · ')}</div>
               </div>
               {!compact && (
                 <div>
@@ -273,7 +307,7 @@ function BayPanel({ appointments, settings }) {
 }
 
 // ─── SETTINGS ───────────────────────────────────────────────────────────────
-function AdminSettings({ settings, setSettings }) {
+function AdminSettings({ settings, setSettings, dark, accent, setTweak }) {
   const days = [
     { k: 'mon', l: 'MON' }, { k: 'tue', l: 'TUE' }, { k: 'wed', l: 'WED' },
     { k: 'thu', l: 'THU' }, { k: 'fri', l: 'FRI' }, { k: 'sat', l: 'SAT' }, { k: 'sun', l: 'SUN' },
@@ -282,6 +316,44 @@ function AdminSettings({ settings, setSettings }) {
     <div style={{ padding: 20, maxWidth: 720, color: 'var(--text)' }}>
       <div className="mono" style={{ fontSize: 10, color: 'var(--mute)' }}>[ SETTINGS ]</div>
       <div className="display" style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>Shop configuration</div>
+
+      {/* Theme */}
+      <div style={{ marginTop: 22, border: '1px solid var(--line)', background: 'var(--surf)', padding: 16 }}>
+        <div className="mono" style={{ fontSize: 9, color: 'var(--mute)' }}>[ APPEARANCE ]</div>
+        <div className="display" style={{ fontSize: 16, fontWeight: 600, marginTop: 4 }}>Theme</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <span style={{ fontSize: 13 }}>Dark mode</span>
+          <button onClick={() => setTweak('dark', !dark)} style={{
+            width: 64, height: 32, position: 'relative', cursor: 'pointer',
+            background: dark ? 'var(--orange)' : 'var(--line)',
+            border: '1px solid ' + (dark ? 'var(--orange)' : 'var(--line-2)'),
+            padding: 0,
+          }}>
+            <span style={{
+              position: 'absolute', top: 2, left: dark ? 34 : 2,
+              width: 26, height: 26, background: dark ? '#0A0A0B' : 'var(--text)',
+              transition: 'left .15s', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }} className="mono">
+              <span style={{ fontSize: 8, fontWeight: 700, color: dark ? 'var(--orange)' : 'var(--bg)' }}>
+                {dark ? 'ON' : 'OFF'}
+              </span>
+            </span>
+          </button>
+        </div>
+        <div style={{ marginTop: 14 }}>
+          <div className="mono" style={{ fontSize: 9, color: 'var(--mute)', marginBottom: 8 }}>ACCENT COLOR</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {['#FF5733', '#007BFF', '#FFD400', '#34C759', '#E5E5E7'].map(c => (
+              <button key={c} onClick={() => setTweak('accent', c)} style={{
+                width: 28, height: 28, background: c, cursor: 'pointer',
+                border: accent === c ? '2px solid var(--text)' : '2px solid transparent',
+                outline: accent === c ? '1px solid var(--line)' : 'none',
+                outlineOffset: 2,
+              }} />
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Holiday Mode */}
       <div style={{ marginTop: 22, border: '1px solid var(--line)', background: 'var(--surf)', overflow: 'hidden' }}>
@@ -388,9 +460,13 @@ function AdminSettings({ settings, setSettings }) {
 }
 
 // ─── SERVICE MANAGER ────────────────────────────────────────────────────────
-function AdminServiceManager({ services, setServices }) {
+function AdminServiceManager({ services: serverServices }) {
+  const [services, setServices] = useState(serverServices);
   const [adding, setAdding] = useState(false);
-  const [draft, setDraft] = useState({ name: '', price: '', minutes: '', desc: '' });
+  const [draft, setDraft] = useState({ name: '', price: '', duration: '', description: '', category: '' });
+
+  // Keep in sync when query refetches
+  React.useEffect(() => { setServices(serverServices); }, [serverServices]);
 
   const toggleHidden = id => setServices(services.map(s => s.id === id ? {...s, hidden: !s.hidden} : s));
   const remove = id => setServices(services.filter(s => s.id !== id));
@@ -398,12 +474,14 @@ function AdminServiceManager({ services, setServices }) {
     if (!draft.name) return;
     setServices([...services, {
       id: 'svc-' + Math.random().toString(36).slice(2,6),
-      code: 'X.' + String(services.length+1).padStart(2,'0'),
-      name: draft.name, price: Number(draft.price)||0,
-      minutes: Number(draft.minutes)||30, desc: draft.desc,
-      icon: 'bolt', hidden: false,
+      name: draft.name, price: Number(draft.price) || 0,
+      duration: Number(draft.duration) || 30,
+      description: draft.description,
+      category: draft.category || 'General',
+      hidden: false,
+      created_at: new Date().toISOString(),
     }]);
-    setDraft({ name: '', price: '', minutes: '', desc: '' });
+    setDraft({ name: '', price: '', duration: '', description: '', category: '' });
     setAdding(false);
   };
 
@@ -422,12 +500,13 @@ function AdminServiceManager({ services, setServices }) {
       {adding && (
         <div style={{ marginTop: 18, border: '1px solid var(--orange)', background: 'var(--surf)', padding: 16 }}>
           <div className="mono" style={{ fontSize: 10, color: 'var(--orange)' }}>[ NEW SERVICE / DRAFT ]</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 8, marginTop: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 8, marginTop: 12 }}>
             <Field label="NAME"><input style={inputStyle} value={draft.name} onChange={e=>setDraft({...draft, name: e.target.value})} placeholder="Tire rotation"/></Field>
             <Field label="PRICE $"><input style={inputStyle} className="mono" value={draft.price} onChange={e=>setDraft({...draft, price: e.target.value})}/></Field>
-            <Field label="MINUTES"><input style={inputStyle} className="mono" value={draft.minutes} onChange={e=>setDraft({...draft, minutes: e.target.value})}/></Field>
+            <Field label="DURATION (MIN)"><input style={inputStyle} className="mono" value={draft.duration} onChange={e=>setDraft({...draft, duration: e.target.value})}/></Field>
+            <Field label="CATEGORY"><input style={inputStyle} value={draft.category} onChange={e=>setDraft({...draft, category: e.target.value})} placeholder="Maintenance"/></Field>
           </div>
-          <Field label="DESCRIPTION"><input style={inputStyle} value={draft.desc} onChange={e=>setDraft({...draft, desc: e.target.value})}/></Field>
+          <Field label="DESCRIPTION"><input style={inputStyle} value={draft.description} onChange={e=>setDraft({...draft, description: e.target.value})}/></Field>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={submitAdd} className="btn-cta" style={{ padding: '10px 18px', fontSize: 11 }}>SAVE</button>
             <button onClick={()=>setAdding(false)} className="btn-ghost" style={{ padding: '10px 18px', fontSize: 11 }}>CANCEL</button>
@@ -436,23 +515,23 @@ function AdminServiceManager({ services, setServices }) {
       )}
 
       <div style={{ marginTop: 18, border: '1px solid var(--line)', background: 'var(--surf)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 80px 80px 100px 120px', padding: '10px 14px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)' }}>
-          {['CODE','SERVICE','MIN','PRICE','STATUS','ACTIONS'].map(h=>(
+        <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 80px 80px 100px 120px', padding: '10px 14px', background: 'var(--bg-2)', borderBottom: '1px solid var(--line)' }}>
+          {['CATEGORY','SERVICE','MIN','PRICE','STATUS','ACTIONS'].map(h=>(
             <div key={h} className="mono" style={{ fontSize: 9, color: 'var(--mute)', letterSpacing: 0.1 }}>{h}</div>
           ))}
         </div>
         {services.map(s => (
           <div key={s.id} style={{
-            display: 'grid', gridTemplateColumns: '60px 1fr 80px 80px 100px 120px',
+            display: 'grid', gridTemplateColumns: '90px 1fr 80px 80px 100px 120px',
             padding: '12px 14px', borderBottom: '1px solid var(--line)',
             alignItems: 'center', opacity: s.hidden ? 0.55 : 1,
           }}>
-            <span className="mono" style={{ fontSize: 11, color: 'var(--orange)' }}>{s.code}</span>
+            <span className="mono" style={{ fontSize: 11, color: 'var(--orange)' }}>{s.category}</span>
             <div>
               <div className="display" style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--mute)', marginTop: 2 }}>{s.desc}</div>
+              <div style={{ fontSize: 11, color: 'var(--mute)', marginTop: 2 }}>{s.description}</div>
             </div>
-            <span className="mono" style={{ fontSize: 11 }}>{s.minutes}min</span>
+            <span className="mono" style={{ fontSize: 11 }}>{s.duration}min</span>
             <span className="mono" style={{ fontSize: 11 }}>${s.price}</span>
             <span><StatusPill status={s.hidden ? 'declined' : 'confirmed'} /></span>
             <div style={{ display: 'flex', gap: 4 }}>
