@@ -81,7 +81,7 @@ function MobileView({ services, settings, setSettings, setTweak, t, blocked }) {
         {
           slot: success.slot,
           services: items.map((i) => i.name),
-          ref: "RM-" + Math.floor(Math.random() * 9000 + 1000),
+          ref: success.bookingRef ?? "RM-" + Math.floor(Math.random() * 9000 + 1000),
         },
         ...h,
       ]);

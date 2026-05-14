@@ -555,10 +555,13 @@ function StepServices({ selected, setSelected }) {
         : [...selected, id],
     );
 
-  const live = services.filter((s) => !s.hidden);
+  const live = services.filter((s) => s.is_active);
   const picked = live.filter((s) => selected.includes(s.id));
   const total = picked.reduce((a, b) => a + b.price, 0);
-  const mins = picked.reduce((a, b) => a + (b.duration ?? 0), 0);
+  const mins = picked.reduce(
+    (a, b) => a + (b.estimated_duration_minutes ?? 0),
+    0,
+  );
 
   // Group by category, preserving insertion order from DB
   const groups = live.reduce((acc, s) => {
@@ -718,7 +721,7 @@ function StepServices({ selected, setSelected }) {
                           className="mono"
                           style={{ fontSize: 10, color: "var(--mute)" }}
                         >
-                          {s.duration}MIN
+                          {s.estimated_duration_minutes}MIN
                         </span>
                         <span
                           className="mono"
@@ -771,7 +774,8 @@ function generateTimeSlots() {
   const slots = [];
   const [startH, startM] = SLOT_START_TIME.split(":").map(Number);
   const [endH, endM] = MAX_BOOKING_TIME.split(":").map(Number);
-  let h = startH, m = startM;
+  let h = startH,
+    m = startM;
   while (h < endH || (h === endH && m <= endM)) {
     slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
     m += SLOT_INTERVAL_MINS;
@@ -859,7 +863,8 @@ function StepSlot({ slot, setSlot }) {
     // Extract "HH:mm" from slot_start ISO timestamps, then sort chronologically
     const slots = (Array.isArray(data) ? data : [])
       .map((s) => {
-        const raw = typeof s === "string" ? s : (s.slot_start ?? s.slot_time ?? s.time);
+        const raw =
+          typeof s === "string" ? s : (s.slot_start ?? s.slot_time ?? s.time);
         if (!raw) return null;
         const timePart = String(raw).includes("T")
           ? String(raw).split("T")[1]
@@ -917,7 +922,10 @@ function StepSlot({ slot, setSlot }) {
 
   const handleTimeClick = (t) => {
     setSelectedTime(t);
-    setSlot(formatSlotLabel(selectedDate, t));
+    setSlot({
+      display: formatSlotLabel(selectedDate, t),
+      iso: `${selectedDate}T${t}:00`,
+    });
   };
 
   const navBtnStyle = (enabled) => ({
@@ -1020,7 +1028,11 @@ function StepSlot({ slot, setSlot }) {
                     ? "1px solid var(--mute)"
                     : "1px solid transparent",
                 background: sel ? "var(--orange)" : "transparent",
-                color: disabled ? "var(--faint)" : sel ? "#0A0A0B" : "var(--text)",
+                color: disabled
+                  ? "var(--faint)"
+                  : sel
+                    ? "#0A0A0B"
+                    : "var(--text)",
                 cursor: disabled ? "not-allowed" : "pointer",
                 fontSize: 12,
                 fontWeight: isToday ? 700 : 400,
@@ -1048,7 +1060,11 @@ function StepSlot({ slot, setSlot }) {
           ) : slotsError ? (
             <div
               className="mono"
-              style={{ fontSize: 10, color: "var(--red, #ff3b30)", padding: "12px 0" }}
+              style={{
+                fontSize: 10,
+                color: "var(--red, #ff3b30)",
+                padding: "12px 0",
+              }}
             >
               FAILED TO LOAD · TAP DATE TO RETRY
             </div>
@@ -1112,7 +1128,10 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
   const { data: services = [] } = useServices();
   const items = services.filter((s) => selected.includes(s.id));
   const total = items.reduce((a, b) => a + b.price, 0);
-  const mins = items.reduce((a, b) => a + (b.duration ?? 0), 0);
+  const mins = items.reduce(
+    (a, b) => a + (b.estimated_duration_minutes ?? 0),
+    0,
+  );
 
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -1142,8 +1161,8 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
     setOtpError(null);
     const { error } = await supabase.auth.verifyOtp({
       email: customer.email,
-      token: otp,
-      type: "email",
+      token: otp.trim(),
+      type: "magiclink",
     });
     setVerifying(false);
     if (error) {
@@ -1183,7 +1202,10 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
               {vehicle.year} {vehicle.make} {vehicle.model}
             </div>
           </div>
-          <div className="mono" style={{ fontSize: 11, color: "var(--orange)" }}>
+          <div
+            className="mono"
+            style={{ fontSize: 11, color: "var(--orange)" }}
+          >
             {vehicle.plate || "—"}
           </div>
         </div>
@@ -1192,7 +1214,7 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
             SLOT
           </div>
           <div className="display" style={{ fontSize: 14, fontWeight: 600 }}>
-            {slot || "—"}
+            {slot?.display ?? slot ?? "—"}
           </div>
         </div>
         <div style={{ borderTop: "1px dashed var(--line)", paddingTop: 10 }}>
@@ -1263,7 +1285,9 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
           value={customer.email}
           placeholder="alex@example.com"
           disabled={customer.verified || otpSent}
-          onChange={(e) => setCustomer((c) => ({ ...c, email: e.target.value }))}
+          onChange={(e) =>
+            setCustomer((c) => ({ ...c, email: e.target.value }))
+          }
         />
       </Field>
 
@@ -1290,7 +1314,11 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
               {sendError && (
                 <div
                   className="mono"
-                  style={{ fontSize: 9, color: "var(--red, #ff3b30)", marginBottom: 8 }}
+                  style={{
+                    fontSize: 9,
+                    color: "var(--red, #ff3b30)",
+                    marginBottom: 8,
+                  }}
                 >
                   {sendError}
                 </div>
@@ -1313,17 +1341,12 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
                 <input
                   style={{
                     ...inputStyle,
-                    letterSpacing: 10,
-                    fontSize: 22,
-                    textAlign: "center",
+                    fontSize: 14,
                     fontFamily: "var(--font-mono)",
                   }}
                   value={otp}
-                  placeholder="000000"
-                  maxLength={6}
-                  onChange={(e) =>
-                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
+                  placeholder="Enter code from email"
+                  onChange={(e) => setOtp(e.target.value.trim())}
                 />
               </Field>
               {otpError && (
@@ -1340,15 +1363,15 @@ function StepConfirm({ vehicle, selected, slot, customer, setCustomer }) {
               )}
               <button
                 onClick={verifyOtp}
-                disabled={otp.length < 6 || verifying}
+                disabled={otp.length < 4 || verifying}
                 className="btn-ghost"
                 style={{
                   width: "100%",
                   padding: "12px 0",
                   fontSize: 11,
                   marginBottom: 6,
-                  opacity: otp.length < 6 ? 0.4 : 1,
-                  cursor: otp.length < 6 ? "not-allowed" : "pointer",
+                  opacity: otp.length < 4 ? 0.4 : 1,
+                  cursor: otp.length < 4 ? "not-allowed" : "pointer",
                 }}
               >
                 {verifying ? "VERIFYING…" : "VERIFY CODE →"}
@@ -1428,10 +1451,17 @@ export function BookingScreen({
 }) {
   const [step, setStep] = useState(() => loadDraft()?.step ?? 0);
   const [vehicle, setVehicle] = useState(
-    () => loadDraft()?.vehicle ?? { year: "", make: "", model: "", plate: "", vin: "" },
+    () =>
+      loadDraft()?.vehicle ?? {
+        year: "",
+        make: "",
+        model: "",
+        plate: "",
+        vin: "",
+      },
   );
-  const [selected, setSelected] = useState(
-    () => initialCart?.length ? initialCart : (loadDraft()?.selected ?? []),
+  const [selected, setSelected] = useState(() =>
+    initialCart?.length ? initialCart : (loadDraft()?.selected ?? []),
   );
   const [slot, setSlot] = useState(() => loadDraft()?.slot ?? null);
   const [customer, setCustomer] = useState(() => {
@@ -1501,9 +1531,73 @@ export function BookingScreen({
     );
   }
 
-  const submit = () => {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  const submit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+
+    // User is authenticated after OTP verification
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Compute total price from selected services
+    const pickedServices = services.filter((s) => selected.includes(s.id));
+    const totalPrice = pickedServices.reduce((a, b) => a + (b.price ?? 0), 0);
+
+    // Step 1 — insert vehicle record
+    const { data: vehicleRow, error: vehicleError } = await supabase
+      .from("vehicles")
+      .insert({
+        user_id: user?.id ?? null,
+        vin: vehicle.vin || null,
+        make: vehicle.make,
+        model: vehicle.model,
+        year: parseInt(vehicle.year, 10),
+        license_plate: vehicle.plate || null,
+      })
+      .select("id")
+      .single();
+
+    if (vehicleError) {
+      setSubmitError(vehicleError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    // Step 2 — insert appointment
+    const bookingRef =
+      "RM-" + Math.random().toString(36).slice(2, 7).toUpperCase();
+
+    const { error: apptError } = await supabase.from("appointments").insert({
+      booking_ref: bookingRef,
+      customer_name: customer.name,
+      customer_email: customer.email,
+      vehicle_id: vehicleRow.id,
+      service_ids: selected,
+      scheduled_slot: slot?.iso,
+      status: "confirmed",
+      total_price: totalPrice,
+      user_id: user?.id ?? null,
+    });
+
+    setSubmitting(false);
+
+    if (apptError) {
+      setSubmitError(apptError.message);
+      return;
+    }
+
     clearDraft();
-    onSubmit({ vehicle, services: selected, slot, customer });
+    onSubmit({
+      vehicle,
+      services: selected,
+      slot: slot?.display ?? slot,
+      customer,
+      bookingRef,
+    });
   };
 
   return (
@@ -1566,35 +1660,55 @@ export function BookingScreen({
           bottom: 80,
           zIndex: 25,
           padding: "0 16px",
-          display: "flex",
-          gap: 8,
         }}
       >
-        {step > 0 && (
-          <button
-            onClick={() => setStep(step - 1)}
-            className="btn-ghost"
-            style={{ padding: "14px 16px", fontSize: 13 }}
+        {submitError && (
+          <div
+            className="mono"
+            style={{
+              fontSize: 9,
+              color: "var(--red, #ff3b30)",
+              padding: "8px 0",
+              textAlign: "center",
+            }}
           >
-            ← BACK
-          </button>
+            {submitError}
+          </div>
         )}
-        <button
-          onClick={() => (step === 3 ? submit() : setStep(step + 1))}
-          disabled={!canNext}
-          className="btn-cta"
-          style={{
-            flex: 1,
-            padding: "14px 16px",
-            fontSize: 13,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span>{step === 3 ? "CONFIRM BOOKING" : "CONTINUE"}</span>
-          <Icon name="arrow" size={16} strokeWidth={2} />
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          {step > 0 && (
+            <button
+              onClick={() => setStep(step - 1)}
+              disabled={submitting}
+              className="btn-ghost"
+              style={{ padding: "14px 16px", fontSize: 13 }}
+            >
+              ← BACK
+            </button>
+          )}
+          <button
+            onClick={() => (step === 3 ? submit() : setStep(step + 1))}
+            disabled={!canNext || submitting}
+            className="btn-cta"
+            style={{
+              flex: 1,
+              padding: "14px 16px",
+              fontSize: 13,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span>
+              {step === 3
+                ? submitting
+                  ? "CONFIRMING…"
+                  : "CONFIRM BOOKING"
+                : "CONTINUE"}
+            </span>
+            <Icon name="arrow" size={16} strokeWidth={2} />
+          </button>
+        </div>
       </div>
     </div>
   );

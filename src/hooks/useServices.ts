@@ -8,7 +8,7 @@ async function fetchServices(category?: string): Promise<Service[]> {
   let query = supabase
     .from("services")
     .select("*")
-    // .eq("hidden", false)
+    .eq("is_active", true)
     .order("name");
 
   if (category) {
